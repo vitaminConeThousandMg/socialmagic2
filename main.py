@@ -386,3 +386,60 @@ def api_stats():
         'total_generated': total_generated,
         'pending': pending
     })
+    
+class MediaUploadForm(FlaskForm):
+    files = MultipleFileField('Files', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov'], 'Images and videos only!')
+    ])
+
+@main_bp.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    if not current_user.subscription_active:
+        return redirect(url_for('auth.subscription'))
+    
+    form = MediaUploadForm()
+    
+    if form.validate_on_submit():
+        uploaded_count = 0
+        
+        for file in form.files.data:
+            if file and allowed_file(file.filename):
+                # Read file data
+                file_data = file.read()
+                
+                # Determine media type
+                file_extension = file.filename.rsplit('.', 1)[1].lower()
+                media_type = 'image' if file_extension in ['jpg', 'jpeg', 'png', 'gif'] else 'video'
+                
+                # Upload to S3 using existing storage service
+                s3_url = storage_service.upload_user_media(
+                    file_data=file_data,
+                    filename=file.filename,
+                    user_id=current_user.id,
+                    media_type=media_type
+                )
+                
+                if s3_url:
+                    # Create Post record for the uploaded media
+                    post = Post(
+                        user_id=current_user.id,
+                        media_type=MediaType.IMAGE if media_type == 'image' else MediaType.VIDEO,
+                        media_url=s3_url,
+                        status=PostStatus.PENDING,
+                        generation_metadata={
+                            'source': 'user_upload',
+                            'original_filename': file.filename
+                        }
+                    )
+                    db.session.add(post)
+                    uploaded_count += 1
+        
+        if uploaded_count > 0:
+            db.session.commit()
+            flash(f'Successfully uploaded {uploaded_count} file(s)', 'success')
+            return redirect(url_for('main.media_library'))
+        else:
+            flash('No files were uploaded', 'warning')
+    
+    return render_template('upload.html', form=form)
