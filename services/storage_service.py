@@ -102,6 +102,40 @@ class S3StorageService:
             logger.error(f"Error uploading brand asset: {str(e)}")
             return None
     
+    def upload_user_media(self, file_data: bytes, filename: str, user_id: int, media_type: str) -> Optional[str]:
+        """Upload user-provided media to S3"""
+        try:
+            # Generate unique S3 key
+            file_extension = filename.split('.')[-1].lower()
+            s3_key = f"user_uploads/{user_id}/{media_type}/{uuid.uuid4()}.{file_extension}"
+            
+            # Determine content type
+            content_type_map = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'mp4': 'video/mp4',
+                'mov': 'video/quicktime'
+            }
+            content_type = content_type_map.get(file_extension, 'application/octet-stream')
+            
+            # Upload to S3
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=s3_key,
+                Body=file_data,
+                ContentType=content_type,
+                ACL='public-read'
+            )
+            
+            # Return public URL
+            return f"https://{self.bucket_name}.s3.{Config.AWS_S3_REGION}.amazonaws.com/{s3_key}"
+            
+        except ClientError as e:
+            logger.error(f"Error uploading user media: {str(e)}")
+            return None
+    
     def generate_thumbnail(self, video_url: str, user_id: int, post_id: int) -> Optional[str]:
         """Generate thumbnail for video (placeholder implementation)"""
         
