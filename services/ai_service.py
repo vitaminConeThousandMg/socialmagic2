@@ -393,6 +393,13 @@ RESPONSE FORMAT (JSON):
             colors = ', '.join(business_profile['brand_colors'])
             context_parts.append(f"- Brand Colors: {colors}")
         
+        # Add brand assets information if available
+        if business_profile.get('brand_assets'):
+            assets_info = []
+            for asset in business_profile['brand_assets']:
+                assets_info.append(f"{asset['name']} ({asset['asset_type']})")
+            context_parts.append(f"- Available Brand Assets: {', '.join(assets_info)}")
+        
         # Add custom AI instructions if available
         if business_profile.get('ai_instructions'):
             context_parts.extend([

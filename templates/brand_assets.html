@@ -1,0 +1,162 @@
+@@ .. @@
+{% extends "base.html" %}
+
+{% block page_title %}Brand Assets{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Brand Assets</h3>
+-        <div style="display: flex; gap: 10px;">
+-            <a href="{{ url_for('main.ai_generate_campaign') }}" class="btn btn-secondary">
+-                🤖 AI Generate
+-            </a>
+-            <a href="{{ url_for('main.new_campaign') }}" class="btn btn-primary">
+-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+-                </svg>
+-                New Campaign
+-            </a>
+-        </div>
++        <a href="{{ url_for('main.upload_brand_asset') }}" class="btn btn-primary">
++            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
++                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
++            </svg>
++            Upload Asset
++        </a>
+    </div>
+
+-    {% if campaigns %}
+-        <div style="display: grid; gap: 20px;">
+-            {% for campaign in campaigns %}
+-            <div class="queue-item" style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 20px;">
+-                <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
+-                    <div style="flex: 1;">
+-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+-                            <h4 style="color: var(--dark); margin: 0;">{{ campaign.name }}</h4>
+-                            <div class="media-status {{ 'posted' if campaign.is_active else 'processing' }}">
+-                                {{ 'Active' if campaign.is_active else 'Inactive' }}
+-                            </div>
+-                        </div>
+-                        {% if campaign.description %}
+-                            <p style="color: var(--gray); margin-bottom: 10px;">{{ campaign.description }}</p>
+-                        {% endif %}
+-                        <div style="font-size: 14px; color: var(--gray);">
+-                            <span>📅 {{ campaign.posts_per_week }} posts/week</span>
+-                            <span style="margin-left: 20px;">📊 {{ campaign.posts|length }} posts generated</span>
+-                            <span style="margin-left: 20px;">🗓️ Created {{ campaign.created_at.strftime('%b %d, %Y') }}</span>
+-                        </div>
+-                    </div>
+-                    <div class="queue-actions">
+-                        <button class="btn btn-secondary" onclick="toggleCampaign({{ campaign.id }})">
+-                            {{ 'Pause' if campaign.is_active else 'Activate' }}
+-                        </button>
+-                        <button class="btn btn-secondary" onclick="editCampaign({{ campaign.id }})">Edit</button>
+-                    </div>
++    <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 30px; border-radius: 12px; color: white; margin-bottom: 30px; text-align: center;">
++        <div style="font-size: 48px; margin-bottom: 15px;">🎨</div>
++        <h3 style="margin-bottom: 10px;">Your Brand Assets</h3>
++        <p style="opacity: 0.9;">Upload your logos, brand images, and style guides to help AI create content that matches your brand perfectly.</p>
++    </div>
+
+-                <div style="background: var(--light-gray); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+-                    <div style="font-weight: 500; color: var(--dark); margin-bottom: 8px;">Content Strategy:</div>
+-                    <div style="color: var(--gray); line-height: 1.5; font-size: 14px;">
+-                        {{ campaign.prompt_template[:200] }}{% if campaign.prompt_template|length > 200 %}...{% endif %}
++    {% if assets %}
++        <div class="media-grid">
++            {% for asset in assets %}
++            <div class="media-item" data-asset-id="{{ asset.id }}">
++                {% if asset.asset_type == 'logo' or asset.mime_type.startswith('image/') %}
++                    <img src="{{ asset.file_url }}" alt="{{ asset.name }}" style="width: 100%; height: 100%; object-fit: cover;">
++                {% else %}
++                    <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center; color: var(--gray); font-size: 24px;">
++                        {% if asset.asset_type == 'style_guide' %}📋{% else %}📄{% endif %}
+                    </div>
++                {% endif %}
++                <div class="media-overlay">
++                    <div class="media-info">
++                        <div style="font-weight: 500;">{{ asset.name }}</div>
++                        <div style="text-transform: capitalize;">{{ asset.asset_type.replace('_', ' ') }}</div>
++                        <div>{{ asset.created_at.strftime('%b %d, %Y') }}</div>
++                        {% if asset.description %}
++                            <div style="margin-top: 4px; font-size: 11px; opacity: 0.8;">{{ asset.description[:50] }}{% if asset.description|length > 50 %}...{% endif %}</div>
++                        {% endif %}
++                        <button onclick="deleteAsset({{ asset.id }})" style="background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-top: 8px; cursor: pointer;">
++                            Delete
++                        </button>
++                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 60px 0; color: var(--gray);">
+-            <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
+-            <h3 style="margin-bottom: 10px;">No campaigns yet</h3>
+-            <p style="margin-bottom: 20px;">Create your first content campaign to start generating AI-powered social media posts.</p>
+-            <div style="display: flex; gap: 15px; justify-content: center;">
+-                <a href="{{ url_for('main.ai_generate_campaign') }}" class="btn btn-primary">
+-                    🤖 Let AI Create Campaign
+-                </a>
+-                <a href="{{ url_for('main.new_campaign') }}" class="btn btn-secondary">
+-                    ✏️ Create Manually
+-                </a>
+-            </div>
++            <div style="font-size: 48px; margin-bottom: 20px;">🎨</div>
++            <h3 style="margin-bottom: 10px;">No brand assets yet</h3>
++            <p style="margin-bottom: 20px;">Upload your logos, brand images, and style guides to help AI create content that perfectly matches your brand.</p>
++            <a href="{{ url_for('main.upload_brand_asset') }}" class="btn btn-primary">
++                📤 Upload Your First Asset
++            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+-function toggleCampaign(campaignId) {
+-    // Implementation for toggling campaign active status
+-    console.log('Toggle campaign:', campaignId);
+-}
+-
+-function editCampaign(campaignId) {
+-    // Implementation for editing campaign
+-    window.location.href = `/campaigns/${campaignId}/edit`;
++async function deleteAsset(assetId) {
++    if (!confirm('Are you sure you want to delete this asset?')) {
++        return;
++    }
++    
++    try {
++        const response = await fetch(`/brand-assets/${assetId}/delete`, {
++            method: 'POST',
++            headers: {
++                'Content-Type': 'application/json',
++            }
++        });
++        
++        const data = await response.json();
++        
++        if (data.success) {
++            showMessage('Asset deleted successfully', 'success');
++            // Remove the asset from the UI
++            const assetElement = document.querySelector(`[data-asset-id="${assetId}"]`);
++            if (assetElement) {
++                assetElement.remove();
++            }
++            
++            // Check if no assets left
++            const remainingAssets = document.querySelectorAll('[data-asset-id]');
++            if (remainingAssets.length === 0) {
++                location.reload(); // Reload to show empty state
++            }
++        } else {
++            showMessage(data.error || 'Failed to delete asset', 'error');
++        }
++    } catch (error) {
++        showMessage('Network error occurred', 'error');
++        console.error('Error:', error);
++    }
+}
+</script>
+{% endblock %}

@@ -5,6 +5,8 @@ from forms import BusinessProfileForm, CampaignForm, BrandAssetForm
 from tasks.generation import regenerate_post
 from tasks.publishing import schedule_approved_posts
 from services.ai_service import ai_service
+from services.storage_service import storage_service
+from utils import allowed_file
 import requests
 import os
 from datetime import datetime, timedelta
@@ -235,6 +237,70 @@ def brand_assets():
     
     return render_template('brand_assets.html', assets=assets)
 
+@main_bp.route('/brand-assets/upload', methods=['GET', 'POST'])
+@login_required
+def upload_brand_asset():
+    if not current_user.subscription_active:
+        return redirect(url_for('auth.subscription'))
+    
+    form = BrandAssetForm()
+    if form.validate_on_submit():
+        file = form.file.data
+        
+        if file and allowed_file(file.filename):
+            # Read file data
+            file_data = file.read()
+            file.seek(0)  # Reset file pointer
+            
+            # Upload to S3
+            file_url = storage_service.upload_brand_asset(
+                file_data=file_data,
+                filename=file.filename,
+                user_id=current_user.id,
+                asset_type=form.asset_type.data
+            )
+            
+            if file_url:
+                # Create brand asset record
+                asset = BrandAsset(
+                    user_id=current_user.id,
+                    name=form.name.data,
+                    asset_type=form.asset_type.data,
+                    file_url=file_url,
+                    file_size=len(file_data),
+                    mime_type=file.content_type,
+                    description=form.description.data
+                )
+                db.session.add(asset)
+                db.session.commit()
+                
+                flash('Brand asset uploaded successfully!', 'success')
+                return redirect(url_for('main.brand_assets'))
+            else:
+                flash('Failed to upload file. Please try again.', 'error')
+        else:
+            flash('Invalid file type. Please upload images or PDFs only.', 'error')
+    
+    return render_template('upload_brand_asset.html', form=form)
+
+@main_bp.route('/brand-assets/<int:asset_id>/delete', methods=['POST'])
+@login_required
+def delete_brand_asset(asset_id):
+    if not current_user.subscription_active:
+        return jsonify({'error': 'Subscription required'}), 403
+    
+    asset = BrandAsset.query.filter_by(id=asset_id, user_id=current_user.id).first()
+    if not asset:
+        return jsonify({'error': 'Asset not found'}), 404
+    
+    # Delete from S3
+    storage_service.delete_media(asset.file_url)
+    
+    # Mark as inactive instead of deleting
+    asset.is_active = False
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Asset deleted successfully'})
 @main_bp.route('/analytics')
 @login_required
 def analytics():

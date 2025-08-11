@@ -157,7 +157,8 @@ def generate_single_post(user_id: int, campaign_id: int, weekly_gen_id: int):
             'content_themes': profile.content_themes or [],
             'hashtag_preferences': profile.hashtag_preferences or [],
             'ai_instructions': profile.ai_instructions or '',
-            'brand_colors': profile.brand_colors or []
+            'brand_colors': profile.brand_colors or [],
+            'brand_assets': get_user_brand_assets(user_id)
         }
         
         # Use the campaign's prompt template and format it with brand profile data
@@ -278,7 +279,8 @@ def regenerate_post(post_id: int, rejection_note: str):
             'content_themes': profile.content_themes or [],
             'hashtag_preferences': profile.hashtag_preferences or [],
             'ai_instructions': profile.ai_instructions or '',
-            'brand_colors': profile.brand_colors or []
+            'brand_colors': profile.brand_colors or [],
+            'brand_assets': get_user_brand_assets(post.user_id)
         }
         
         # Generate new content with rejection feedback
@@ -434,3 +436,18 @@ def send_weekly_posts_email(user_id: int, weekly_gen_id: int):
     except Exception as e:
         logger.error(f"Error sending weekly posts email: {str(e)}")
         return False
+def get_user_brand_assets(user_id: int) -> list:
+    """Get user's brand assets for AI context"""
+    try:
+        from models import BrandAsset
+        assets = BrandAsset.query.filter_by(user_id=user_id, is_active=True).all()
+        
+        return [{
+            'name': asset.name,
+            'asset_type': asset.asset_type,
+            'description': asset.description or '',
+            'file_url': asset.file_url
+        } for asset in assets]
+    except Exception as e:
+        logger.error(f"Error getting brand assets for user {user_id}: {str(e)}")
+        return []

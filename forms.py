@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms.fields import MultipleFileField
 from wtforms import StringField, PasswordField, TextAreaField, SelectField, BooleanField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
 
@@ -54,7 +55,7 @@ class BrandAssetForm(FlaskForm):
     ], validators=[DataRequired()])
     file = FileField('Upload File', validators=[
         FileRequired(),
-        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'svg'], 'Images and PDFs only!')
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'svg'], 'Images, PDFs, and SVGs only!')
     ])
     description = TextAreaField('Description', validators=[Optional()],
                                render_kw={"rows": 3, "placeholder": "How should this asset be used?"})

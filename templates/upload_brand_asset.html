@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block page_title %}Upload Brand Asset{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Upload Brand Asset</h3>
+        <a href="{{ url_for('main.brand_assets') }}" class="btn btn-secondary">
+            ← Back to Assets
+        </a>
+    </div>
+
+    <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 30px; border-radius: 12px; color: white; margin-bottom: 30px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 15px;">📤</div>
+        <h3 style="margin-bottom: 10px;">Add Brand Asset</h3>
+        <p style="opacity: 0.9;">Upload logos, brand images, or style guides that represent your brand. These will help AI create more accurate content.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" style="background: var(--white); padding: 30px; border-radius: 12px; box-shadow: var(--shadow);">
+        {{ form.hidden_tag() }}
+        
+        <div style="display: grid; gap: 20px;">
+            <div>
+                {{ form.name.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.name(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;", placeholder="e.g., Main Logo, Brand Colors, Style Guide") }}
+                {% if form.name.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.name.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                {{ form.asset_type.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.asset_type(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.asset_type.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.asset_type.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                {{ form.file.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                <div class="upload-area" id="uploadArea" style="margin-bottom: 10px;">
+                    <div class="upload-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Click to select file</p>
+                    <p class="upload-subtext">PNG, JPG, GIF, PDF, SVG up to 10MB</p>
+                </div>
+                {{ form.file(style="display: none;", id="fileInput") }}
+                <div id="filePreview" style="display: none; padding: 10px; background: var(--light-gray); border-radius: 6px; font-size: 14px;"></div>
+                {% if form.file.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.file.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                {{ form.description.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.description(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-height: 80px; resize: vertical;", placeholder="How should this asset be used in content generation?") }}
+                {% if form.description.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.description.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                {{ form.submit(class="btn btn-primary", style="flex: 1; padding: 12px;") }}
+                <a href="{{ url_for('main.brand_assets') }}" class="btn btn-secondary" style="flex: 1; padding: 12px; text-align: center; text-decoration: none;">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    
+    // Click to upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+    
+    // File selection
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            displayFilePreview(file);
+        }
+    });
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displayFilePreview(files[0]);
+        }
+    });
+    
+    function displayFilePreview(file) {
+        filePreview.style.display = 'block';
+        filePreview.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white;">
+                    ${file.type.startsWith('image/') ? '🖼️' : '📄'}
+                </div>
+                <div>
+                    <div style="font-weight: 500;">${file.name}</div>
+                    <div style="color: var(--gray); font-size: 12px;">${formatFileSize(file.size)}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const p = Math.pow(k, i);
+        const s = Math.round((bytes / p) * 100) / 100;
+        return s + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}
