@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block page_title %}AI Campaign Generator{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">AI Campaign Generator</h3>
+        <span style="color: var(--gray); font-size: 14px;">Let AI create a complete content strategy for you</span>
+    </div>
+
+    <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 30px; border-radius: 12px; color: white; margin-bottom: 30px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 15px;">🤖</div>
+        <h3 style="margin-bottom: 10px;">AI-Powered Content Strategy</h3>
+        <p style="opacity: 0.9;">Our AI will analyze your business profile and create a complete week's worth of engaging content prompts tailored to your brand.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <div>
+            <label style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;">Total Posts per Week</label>
+            <input type="number" id="numPosts" value="7" min="1" max="14" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+            <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">How many posts should AI generate for your weekly campaign?</div>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;">Content Mix</label>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div>
+                    <label style="font-size: 12px; color: var(--gray);">Images</label>
+                    <input type="number" id="numImages" value="5" min="0" style="width: 60px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--gray);">Videos</label>
+                    <input type="number" id="numVideos" value="2" min="0" style="width: 60px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                </div>
+            </div>
+            <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">Split between image and video content</div>
+        </div>
+    </div>
+
+    <button id="generateBtn" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px; margin-bottom: 30px;">
+        <span id="generateBtnText">✨ Generate AI Campaign</span>
+    </button>
+
+    <!-- Results Section -->
+    <div id="resultsSection" style="display: none;">
+        <div class="section-header">
+            <h3 class="section-title">Generated Campaign Strategy</h3>
+        </div>
+
+        <div id="campaignPreview" style="background: var(--white); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px;">
+            <!-- Campaign details will be populated here -->
+        </div>
+
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button id="createCombinedBtn" class="btn btn-primary">
+                Create as Single Campaign
+            </button>
+            <button id="createIndividualBtn" class="btn btn-secondary">
+                Create Individual Campaigns
+            </button>
+            <button id="regenerateBtn" class="btn btn-secondary">
+                🔄 Regenerate
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generateBtn');
+    const generateBtnText = document.getElementById('generateBtnText');
+    const resultsSection = document.getElementById('resultsSection');
+    const campaignPreview = document.getElementById('campaignPreview');
+    const numPostsInput = document.getElementById('numPosts');
+    const numImagesInput = document.getElementById('numImages');
+    const numVideosInput = document.getElementById('numVideos');
+    
+    let currentCampaignData = null;
+
+    // Auto-update total when images/videos change
+    numImagesInput.addEventListener('input', updateTotal);
+    numVideosInput.addEventListener('input', updateTotal);
+    
+    function updateTotal() {
+        const images = parseInt(numImagesInput.value) || 0;
+        const videos = parseInt(numVideosInput.value) || 0;
+        numPostsInput.value = images + videos;
+    }
+
+    generateBtn.addEventListener('click', generateCampaign);
+    
+    async function generateCampaign() {
+        const numPosts = parseInt(numPostsInput.value) || 7;
+        const numImages = parseInt(numImagesInput.value) || 5;
+        const numVideos = parseInt(numVideosInput.value) || 2;
+        
+        if (numImages + numVideos !== numPosts) {
+            showMessage('Images + Videos must equal Total Posts', 'error');
+            return;
+        }
+        
+        generateBtn.disabled = true;
+        generateBtnText.innerHTML = '<span class="loading-spinner"></span> Generating Campaign...';
+        
+        try {
+            const response = await fetch('/campaigns/ai-generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    num_posts: numPosts,
+                    num_images: numImages,
+                    num_videos: numVideos
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentCampaignData = data;
+                displayCampaignPreview(data);
+                resultsSection.style.display = 'block';
+                showMessage('Campaign generated successfully!', 'success');
+            } else {
+                showMessage(data.error || 'Failed to generate campaign', 'error');
+            }
+        } catch (error) {
+            showMessage('Network error occurred', 'error');
+            console.error('Error:', error);
+        } finally {
+            generateBtn.disabled = false;
+            generateBtnText.textContent = '✨ Generate AI Campaign';
+        }
+    }
+    
+    function displayCampaignPreview(data) {
+        const imagePrompts = data.prompts.filter(p => p.type === 'image');
+        const videoPrompts = data.prompts.filter(p => p.type === 'video');
+        
+        campaignPreview.innerHTML = `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: var(--primary); margin-bottom: 8px;">${data.campaign_name}</h4>
+                <p style="color: var(--gray); margin-bottom: 15px;">${data.campaign_description}</p>
+                <div style="display: flex; gap: 20px; font-size: 14px; color: var(--gray);">
+                    <span>📸 ${imagePrompts.length} Image Posts</span>
+                    <span>🎥 ${videoPrompts.length} Video Posts</span>
+                    <span>📅 ${data.prompts.length} Total Posts/Week</span>
+                </div>
+            </div>
+            
+            <div style="display: grid; gap: 15px;">
+                ${data.prompts.map((prompt, index) => `
+                    <div style="padding: 15px; background: var(--light-gray); border-radius: 8px; border-left: 4px solid ${prompt.type === 'image' ? 'var(--primary)' : 'var(--secondary)'};">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: ${prompt.type === 'image' ? 'var(--primary)' : 'var(--secondary)'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                                ${prompt.type === 'image' ? '📸 IMAGE' : '🎥 VIDEO'}
+                            </span>
+                            <span style="color: var(--gray); font-size: 12px; text-transform: capitalize;">
+                                ${prompt.content_theme?.replace('_', ' ') || 'Content'}
+                            </span>
+                        </div>
+                        <p style="color: var(--dark); line-height: 1.5;">${prompt.prompt}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Create campaign buttons
+    document.getElementById('createCombinedBtn').addEventListener('click', () => createCampaign('combined'));
+    document.getElementById('createIndividualBtn').addEventListener('click', () => createCampaign('individual'));
+    document.getElementById('regenerateBtn').addEventListener('click', generateCampaign);
+    
+    async function createCampaign(type) {
+        if (!currentCampaignData) return;
+        
+        try {
+            const response = await fetch('/campaigns/create-from-ai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...currentCampaignData,
+                    campaign_type: type
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/campaigns';
+                }, 1500);
+            } else {
+                showMessage(data.error || 'Failed to create campaign', 'error');
+            }
+        } catch (error) {
+            showMessage('Network error occurred', 'error');
+            console.error('Error:', error);
+        }
+    }
+});
+</script>
+{% endblock %}

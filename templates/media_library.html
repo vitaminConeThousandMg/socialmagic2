@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block page_title %}Media Library{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Media Library</h3>
+        <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add Media
+        </a>
+    </div>
+
+    {% if media.items %}
+        <div class="media-grid" id="mediaLibrary">
+            {% for item in media.items %}
+            <div class="media-item" data-media-id="{{ item.id }}">
+                <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center; color: var(--gray); font-size: 24px;">
+                    {% if item.file_type and item.file_type.startswith('image/') %}📷{% else %}📹{% endif %}
+                </div>
+                <div class="media-overlay">
+                    <div class="media-info">
+                        <div>{{ item.original_filename }}</div>
+                        <div>{{ item.upload_date.strftime('%b %d, %Y') }}</div>
+                        <div class="media-status {{ item.status }}">
+                            {% if item.status == 'posted' %}Posted
+                            {% elif item.status == 'scheduled' %}Scheduled
+                            {% elif item.status == 'processing' %}Processing
+                            {% else %}{{ item.status.title() }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if media.pages > 1 %}
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px;">
+            {% if media.has_prev %}
+                <a href="{{ url_for('main.media_library', page=media.prev_num) }}" class="btn btn-secondary">Previous</a>
+            {% endif %}
+            
+            <span style="color: var(--gray);">Page {{ media.page }} of {{ media.pages }}</span>
+            
+            {% if media.has_next %}
+                <a href="{{ url_for('main.media_library', page=media.next_num) }}" class="btn btn-secondary">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 0; color: var(--gray);">
+            <div style="font-size: 48px; margin-bottom: 20px;">📷</div>
+            <h3 style="margin-bottom: 10px;">No media uploaded yet</h3>
+            <p style="margin-bottom: 20px;">Upload your first images or videos to get started with AI-powered social media posting.</p>
+            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">Upload Media</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

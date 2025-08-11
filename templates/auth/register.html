@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - SocialMagic{% endblock %}
+
+{% block auth_content %}
+<div style="min-height: 100vh; background: var(--light-gray); display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 400px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div class="logo-icon" style="width: 48px; height: 48px; margin: 0 auto 16px;">✨</div>
+            <h2 style="font-size: 24px; color: var(--dark); margin-bottom: 8px;">Create Your Account</h2>
+            <p style="color: var(--gray);">Start your AI-powered social media journey</p>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div style="margin-bottom: 20px;">
+                {{ form.email.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.email(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.email.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.email.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                {{ form.password.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.password(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.password.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.password.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                {{ form.password2.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.password2(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.password2.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.password2.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                {{ form.brand_name.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.brand_name(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;", placeholder="Optional - Your brand or business name") }}
+            </div>
+
+            {{ form.submit(style="width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;") }}
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p style="color: var(--gray); font-size: 14px;">
+                Already have an account? 
+                <a href="{{ url_for('auth.login') }}" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block page_title %}Post Queue{% endblock %}
+
+{% block content %}
+<div class="queue-section">
+    <div class="section-header">
+        <h3 class="section-title">Processing Queue</h3>
+        <span style="color: var(--gray); font-size: 14px;">AI is working on these posts</span>
+    </div>
+
+    {% if processing_posts %}
+        {% for post in processing_posts %}
+        <div class="queue-item">
+            <div class="queue-thumbnail" style="width: 60px; height: 60px; background: var(--light-gray); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+                📷
+            </div>
+            <div class="queue-details">
+                <div class="queue-title">{{ post.original_filename }}</div>
+                <div class="queue-meta">Uploaded {{ post.upload_date.strftime('%B %d at %I:%M %p') }}</div>
+                <div style="margin-top: 4px;">
+                    <div class="media-status processing">Processing AI Caption...</div>
+                </div>
+            </div>
+            <div class="queue-actions">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--gray);">
+            <p>No posts currently processing.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="queue-section" style="margin-top: 30px;">
+    <div class="section-header">
+        <h3 class="section-title">Scheduled Posts</h3>
+        <span style="color: var(--gray); font-size: 14px;">Ready to be published</span>
+    </div>
+
+    {% if scheduled_posts %}
+        {% for post in scheduled_posts %}
+        <div class="queue-item">
+            <div class="queue-thumbnail" style="width: 60px; height: 60px; background: var(--light-gray); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+                📷
+            </div>
+            <div class="queue-details">
+                <div class="queue-title">{{ post.original_filename }}</div>
+                <div class="queue-meta">
+                    {% if post.caption %}
+                        {{ post.caption[:100] }}{% if post.caption|length > 100 %}...{% endif %}
+                    {% else %}
+                        AI caption generated
+                    {% endif %}
+                </div>
+                <div style="margin-top: 4px;">
+                    <div class="media-status scheduled">Scheduled for Publishing</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--gray);">
+            <p>No posts scheduled yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

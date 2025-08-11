@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block page_title %}Campaigns{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Content Campaigns</h3>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('main.ai_generate_campaign') }}" class="btn btn-secondary">
+                🤖 AI Generate
+            </a>
+            <a href="{{ url_for('main.new_campaign') }}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                New Campaign
+            </a>
+        </div>
+    </div>
+
+    {% if campaigns %}
+        <div style="display: grid; gap: 20px;">
+            {% for campaign in campaigns %}
+            <div class="queue-item" style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 20px;">
+                <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <h4 style="color: var(--dark); margin: 0;">{{ campaign.name }}</h4>
+                            <div class="media-status {{ 'posted' if campaign.is_active else 'processing' }}">
+                                {{ 'Active' if campaign.is_active else 'Inactive' }}
+                            </div>
+                        </div>
+                        {% if campaign.description %}
+                            <p style="color: var(--gray); margin-bottom: 10px;">{{ campaign.description }}</p>
+                        {% endif %}
+                        <div style="font-size: 14px; color: var(--gray);">
+                            <span>📅 {{ campaign.posts_per_week }} posts/week</span>
+                            <span style="margin-left: 20px;">📊 {{ campaign.posts|length }} posts generated</span>
+                            <span style="margin-left: 20px;">🗓️ Created {{ campaign.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                    <div class="queue-actions">
+                        <button class="btn btn-secondary" onclick="toggleCampaign({{ campaign.id }})">
+                            {{ 'Pause' if campaign.is_active else 'Activate' }}
+                        </button>
+                        <button class="btn btn-secondary" onclick="editCampaign({{ campaign.id }})">Edit</button>
+                    </div>
+                </div>
+                
+                <div style="background: var(--light-gray); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                    <div style="font-weight: 500; color: var(--dark); margin-bottom: 8px;">Content Strategy:</div>
+                    <div style="color: var(--gray); line-height: 1.5; font-size: 14px;">
+                        {{ campaign.prompt_template[:200] }}{% if campaign.prompt_template|length > 200 %}...{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 60px 0; color: var(--gray);">
+            <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
+            <h3 style="margin-bottom: 10px;">No campaigns yet</h3>
+            <p style="margin-bottom: 20px;">Create your first content campaign to start generating AI-powered social media posts.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a href="{{ url_for('main.ai_generate_campaign') }}" class="btn btn-primary">
+                    🤖 Let AI Create Campaign
+                </a>
+                <a href="{{ url_for('main.new_campaign') }}" class="btn btn-secondary">
+                    ✏️ Create Manually
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleCampaign(campaignId) {
+    // Implementation for toggling campaign active status
+    console.log('Toggle campaign:', campaignId);
+}
+
+function editCampaign(campaignId) {
+    // Implementation for editing campaign
+    window.location.href = `/campaigns/${campaignId}/edit`;
+}
+</script>
+{% endblock %}

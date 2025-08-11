@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Business Profile</h3>
+        <span style="color: var(--gray); font-size: 14px;">Customize your AI content generation</span>
+    </div>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <div style="display: grid; gap: 20px;">
+            <div>
+                {{ form.brand_name.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.brand_name(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.brand_name.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.brand_name.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                {{ form.brand_voice.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.brand_voice(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-height: 100px; resize: vertical;") }}
+                <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">
+                    Describe your brand's personality, tone, and style for AI content generation
+                </div>
+            </div>
+
+            <div>
+                {{ form.target_audience.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.target_audience(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">
+                    Who are you trying to reach? (e.g., "Young professionals interested in fitness")
+                </div>
+            </div>
+
+            <div>
+                {{ form.ai_instructions.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.ai_instructions(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-height: 120px; resize: vertical;") }}
+                <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">
+                    Custom instructions for AI content generation (optional)
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                {{ form.submit(class="btn btn-primary", style="padding: 12px 24px;") }}
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="upload-section" style="margin-top: 30px;">
+    <div class="section-header">
+        <h3 class="section-title">Connected Accounts</h3>
+        <span style="color: var(--gray); font-size: 14px;">Manage your social media connections</span>
+    </div>
+
+    {% if social_accounts %}
+        {% for account in social_accounts %}
+        <div class="queue-item">
+            <div style="width: 40px; height: 40px; background: {% if account.platform == 'instagram' %}linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%){% else %}#1877f2{% endif %}; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 16px;">
+                {% if account.platform == 'instagram' %}IG{% else %}FB{% endif %}
+            </div>
+            <div class="queue-details">
+                <div class="queue-title">{{ account.platform.title() }}</div>
+                <div class="queue-meta">
+                    {% if account.is_connected %}
+                        Connected as @{{ account.username or 'Unknown' }}
+                    {% else %}
+                        Not connected
+                    {% endif %}
+                </div>
+            </div>
+            <div class="queue-actions">
+                {% if account.is_connected %}
+                    <div class="media-status posted">Connected</div>
+                {% else %}
+                    <button class="btn btn-primary">Connect</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--gray);">
+            <div style="font-size: 48px; margin-bottom: 20px;">🔗</div>
+            <h3 style="margin-bottom: 10px;">No accounts connected</h3>
+            <p style="margin-bottom: 20px;">Connect your Instagram and Facebook accounts to start posting automatically. For now, you can test the app without connecting accounts.</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-primary" disabled>Connect Instagram (Coming Soon)</button>
+                <button class="btn btn-secondary" disabled>Connect Facebook (Coming Soon)</button>
+            </div>
+            <p style="font-size: 12px; color: var(--gray); margin-top: 10px;">You can use SocialMagic without connecting accounts - posts will be generated but not automatically published</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="upload-section" style="margin-top: 30px;">
+    <div class="section-header">
+        <h3 class="section-title">Subscription</h3>
+        <span style="color: var(--gray); font-size: 14px;">Manage your subscription</span>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px; background: var(--light-gray); border-radius: 8px;">
+        <div>
+            <h4 style="margin-bottom: 4px;">Premium Plan</h4>
+            <p style="color: var(--gray); font-size: 14px;">$29/month • Active</p>
+        </div>
+        <div class="media-status posted">Active</div>
+    </div>
+</div>
+{% endblock %}

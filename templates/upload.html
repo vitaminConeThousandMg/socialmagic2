@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block page_title %}Upload Media{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Upload New Media</h3>
+        <span class="upload-subtext">Drag and drop or click to upload</span>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+                </svg>
+            </div>
+            <p class="upload-text">Drop your images and videos here</p>
+            <p class="upload-subtext">PNG, JPG, MP4 up to 100MB</p>
+            {{ form.files(style="display: none;", id="fileInput") }}
+        </div>
+
+        <div id="uploadPreview" class="media-grid" style="display: none; margin-top: 24px;"></div>
+
+        <button type="submit" id="uploadBtn" class="btn btn-primary" style="display: none; margin-top: 20px; width: 100%;">
+            <span id="uploadBtnText">Upload Files</span>
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadBtnText = document.getElementById('uploadBtnText');
+    const uploadForm = document.getElementById('uploadForm');
+    
+    let selectedFiles = [];
+
+    // Click to upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+    
+    function handleFiles(files) {
+        const validFiles = Array.from(files).filter(file => {
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+            const isValidSize = file.size <= 100 * 1024 * 1024; // 100MB
+            
+            return (isImage || isVideo) && isValidSize;
+        });
+        
+        selectedFiles = [...selectedFiles, ...validFiles];
+        displayPreview();
+        updateUploadButton();
+    }
+    
+    function displayPreview() {
+        if (selectedFiles.length === 0) {
+            uploadPreview.style.display = 'none';
+            return;
+        }
+
+        uploadPreview.style.display = 'grid';
+        uploadPreview.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = 'media-item';
+            
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                item.appendChild(img);
+            } else {
+                item.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--light-gray); color: var(--gray);">📹 Video</div>';
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'media-overlay';
+            overlay.innerHTML = `
+                <div class="media-info">
+                    <div>${file.name}</div>
+                    <div>${formatFileSize(file.size)}</div>
+                </div>
+            `;
+            overlay.onclick = () => removeFile(index);
+            
+            item.appendChild(overlay);
+            uploadPreview.appendChild(item);
+        });
+    }
+    
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        displayPreview();
+        updateUploadButton();
+    }
+    
+    function updateUploadButton() {
+        if (selectedFiles.length > 0) {
+            uploadBtn.style.display = 'block';
+            uploadBtnText.textContent = `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`;
+        } else {
+            uploadBtn.style.display = 'none';
+        }
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const p = Math.pow(k, i);
+        const s = Math.round((bytes / p) * 100) / 100;
+        return s + ' ' + sizes[i];
+    }
+    
+    // Handle form submission
+    uploadForm.addEventListener('submit', function(e) {
+        if (selectedFiles.length === 0) {
+            e.preventDefault();
+            return;
+        }
+        
+        uploadBtn.disabled = true;
+        uploadBtnText.innerHTML = '<span class="loading-spinner"></span> Uploading...';
+    });
+});
+</script>
+{% endblock %}

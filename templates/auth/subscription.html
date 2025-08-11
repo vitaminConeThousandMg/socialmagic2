@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Subscribe - SocialMagic{% endblock %}
+
+{% block auth_content %}
+<div style="min-height: 100vh; background: var(--light-gray); display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 500px; text-align: center;">
+        <div style="margin-bottom: 30px;">
+            <div class="logo-icon" style="width: 48px; height: 48px; margin: 0 auto 16px;">✨</div>
+            <h2 style="font-size: 24px; color: var(--dark); margin-bottom: 8px;">Choose Your Plan</h2>
+            <p style="color: var(--gray);">Start your premium social media automation</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); padding: 40px; border-radius: 12px; color: white; margin-bottom: 30px;">
+            <h3 style="font-size: 28px; margin-bottom: 10px;">Premium Plan</h3>
+            <div style="font-size: 48px; font-weight: 700; margin-bottom: 10px;">$29<span style="font-size: 18px; font-weight: 400;">/month</span></div>
+            <p style="opacity: 0.9;">Everything you need to automate your social media</p>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)" style="margin-right: 12px;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>Unlimited image uploads</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)" style="margin-right: 12px;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>AI-powered caption generation</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)" style="margin-right: 12px;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>Auto-posting to Instagram & Facebook</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)" style="margin-right: 12px;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>Advanced analytics & insights</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)" style="margin-right: 12px;">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <span>Priority support</span>
+            </div>
+        </div>
+
+        <a href="{{ url_for('auth.subscription') }}" style="width: 100%; background: var(--primary); color: white; padding: 16px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; cursor: pointer;">
+            Start Premium Subscription
+        </a>
+
+        <p style="font-size: 12px; color: var(--gray); margin-top: 20px;">
+            Secure payment powered by Stripe. Cancel anytime.
+        </p>
+    </div>
+</div>
+{% endblock %}

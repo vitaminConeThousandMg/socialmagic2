@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Performance Analytics</h3>
+        <select class="btn btn-secondary">
+            <option>Last 30 days</option>
+            <option>Last 7 days</option>
+            <option>Last 90 days</option>
+        </select>
+    </div>
+
+    <!-- Analytics Summary -->
+    <div class="stats-grid" style="margin-bottom: 30px;">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Total Reach</span>
+                <div class="stat-icon green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-value">{{ "{:,}".format(analytics.total_reach) }}</div>
+            <div class="stat-change positive">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14l5-5 5 5z"/>
+                </svg>
+                Growing
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Impressions</span>
+                <div class="stat-icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-value">{{ "{:,}".format(analytics.total_impressions) }}</div>
+            <div class="stat-change">Last 30 days</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Engagement Rate</span>
+                <div class="stat-icon purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-value">{{ analytics.engagement_rate }}%</div>
+            <div class="stat-change positive">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14l5-5 5 5z"/>
+                </svg>
+                Above average
+            </div>
+        </div>
+    </div>
+
+    <!-- Coming Soon Message -->
+    <div style="text-align: center; padding: 60px 0; color: var(--gray); background: var(--white); border-radius: 12px; box-shadow: var(--shadow);">
+        <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+        <h3 style="margin-bottom: 10px;">Detailed Analytics Coming Soon</h3>
+        <p>Advanced charts, engagement insights, and performance metrics will be available here once you start posting content.</p>
+    </div>
+</div>
+{% endblock %}

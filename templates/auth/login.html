@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - SocialMagic{% endblock %}
+
+{% block auth_content %}
+<div style="min-height: 100vh; background: var(--light-gray); display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 400px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div class="logo-icon" style="width: 48px; height: 48px; margin: 0 auto 16px;">✨</div>
+            <h2 style="font-size: 24px; color: var(--dark); margin-bottom: 8px;">Welcome Back</h2>
+            <p style="color: var(--gray);">Sign in to your account</p>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div style="margin-bottom: 20px;">
+                {{ form.email.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.email(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.email.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.email.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                {{ form.password.label(style="display: block; font-weight: 500; color: var(--dark); margin-bottom: 6px;") }}
+                {{ form.password(style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;") }}
+                {% if form.password.errors %}
+                    <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.password.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 30px; display: flex; align-items: center;">
+                {{ form.remember_me(style="margin-right: 8px;") }}
+                {{ form.remember_me.label(style="color: var(--gray); font-size: 14px;") }}
+            </div>
+
+            {{ form.submit(style="width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;") }}
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p style="color: var(--gray); font-size: 14px;">
+                Don't have an account? 
+                <a href="{{ url_for('auth.register') }}" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign up</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
