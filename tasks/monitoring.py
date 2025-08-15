@@ -2,7 +2,7 @@
 # tasks/monitoring.py - Webhook and system health monitoring tasks
 # =============================================================================
 
-from celery_app import celery
+from tasks.celery_app import current_app as celery
 from models import db, WebhookEvent, User, Post, Notification
 from datetime import datetime, timedelta
 import logging
