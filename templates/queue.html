@@ -12,9 +12,21 @@
     {% if processing_posts %}
         {% for post in processing_posts %}
         <div class="queue-item">
-            <div class="queue-thumbnail" style="width: 60px; height: 60px; background: var(--light-gray); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
-                📷
-            </div>
+           <div class="queue-thumbnail" style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background: var(--light-gray);">
+    {% if post.media_url %}
+        {% if post.media_type.value == 'image' %}
+            <img src="{{ post.media_url }}" alt="Post media" style="width: 100%; height: 100%; object-fit: cover;">
+        {% elif post.thumbnail_url %}
+            <img src="{{ post.thumbnail_url }}" alt="Video thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gray);">📹</div>
+        {% endif %}
+    {% else %}
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+            📷
+        </div>
+    {% endif %}
+</div>
             <div class="queue-details">
                 <div class="queue-title">{{ post.original_filename }}</div>
                 <div class="queue-meta">Uploaded {{ post.upload_date.strftime('%B %d at %I:%M %p') }}</div>
