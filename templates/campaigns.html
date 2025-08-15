@@ -76,13 +76,95 @@
 
 <script>
 function toggleCampaign(campaignId) {
-    // Implementation for toggling campaign active status
-    console.log('Toggle campaign:', campaignId);
+    // Toggle campaign active status via API
+    fetch(`/api/campaigns/${campaignId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // Reload page to show updated status
+            setTimeout(() => window.location.reload(), 500);
+        } else {
+            showMessage(data.error || 'Failed to toggle campaign', 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Network error occurred', 'error');
+        console.error('Error:', error);
+    });
 }
 
 function editCampaign(campaignId) {
-    // Implementation for editing campaign
+    // Navigate to campaign edit page
     window.location.href = `/campaigns/${campaignId}/edit`;
+}
+
+function deleteCampaign(campaignId) {
+    // Confirm before deleting
+    if (!confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch(`/api/campaigns/${campaignId}/delete`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Campaign deleted successfully', 'success');
+            setTimeout(() => window.location.reload(), 500);
+        } else {
+            showMessage(data.error || 'Failed to delete campaign', 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Network error occurred', 'error');
+        console.error('Error:', error);
+    });
+}
+
+// Helper function to show messages if not already defined
+if (typeof showMessage === 'undefined') {
+    function showMessage(message, type = 'info') {
+        const messageArea = document.getElementById('messageArea') || document.querySelector('.content');
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                ${type === 'success' 
+                    ? '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>'
+                    : '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>'}
+            </svg>
+            ${message}
+        `;
+        
+        if (messageArea.id === 'messageArea') {
+            messageArea.innerHTML = '';
+            messageArea.appendChild(messageDiv);
+        } else {
+            messageArea.insertBefore(messageDiv, messageArea.firstChild);
+        }
+        
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 300);
+        }, 5000);
+    }
 }
 </script>
 {% endblock %}
