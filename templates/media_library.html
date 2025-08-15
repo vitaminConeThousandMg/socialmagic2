@@ -18,23 +18,41 @@
         <div class="media-grid" id="mediaLibrary">
             {% for item in media.items %}
             <div class="media-item" data-media-id="{{ item.id }}">
-                <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center; color: var(--gray); font-size: 24px;">
-                    {% if item.file_type and item.file_type.startswith('image/') %}📷{% else %}📹{% endif %}
-                </div>
-                <div class="media-overlay">
-                    <div class="media-info">
-                        <div>{{ item.original_filename }}</div>
-                        <div>{{ item.upload_date.strftime('%b %d, %Y') }}</div>
-                        <div class="media-status {{ item.status }}">
-                            {% if item.status == 'posted' %}Posted
-                            {% elif item.status == 'scheduled' %}Scheduled
-                            {% elif item.status == 'processing' %}Processing
-                            {% else %}{{ item.status.title() }}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+    {% if item.media_url %}
+        {% if item.media_type.value == 'image' %}
+            <img src="{{ item.media_url }}" alt="{{ item.original_filename or 'Media' }}" 
+                 style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+            {% if item.thumbnail_url %}
+                <img src="{{ item.thumbnail_url }}" alt="{{ item.original_filename or 'Video thumbnail' }}" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                <video src="{{ item.media_url }}" style="width: 100%; height: 100%; object-fit: cover;" muted></video>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center; color: var(--gray); font-size: 24px;">
+            {% if item.media_type and item.media_type.value == 'image' %}📷{% else %}📹{% endif %}
+        </div>
+    {% endif %}
+    <div class="media-overlay">
+        <div class="media-info">
+            <div>{{ item.original_filename or 'Untitled' }}</div>
+            <div>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}</div>
+            <div class="media-status {{ item.status.value if item.status else 'pending' }}">
+                {% if item.status %}
+                    {% if item.status.value == 'posted' %}Posted
+                    {% elif item.status.value == 'scheduled' %}Scheduled
+                    {% elif item.status.value == 'pending' %}Processing
+                    {% else %}{{ item.status.value.title() }}
+                    {% endif %}
+                {% else %}
+                    Pending
+                {% endif %}
             </div>
+        </div>
+    </div>
+</div>
             {% endfor %}
         </div>
 
