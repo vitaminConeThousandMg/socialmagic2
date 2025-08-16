@@ -211,3 +211,36 @@ class WeeklyGeneration(db.Model):
     generation_completed = db.Column(db.Boolean, default=False)
     email_sent = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ImageReference(db.Model):
+    __tablename__ = 'image_references'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    n8n_media_id = db.Column(db.String(100))
+    original_filename = db.Column(db.String(255))
+    file_type = db.Column(db.String(50))
+    status = db.Column(db.String(50), default='pending')
+    posted = db.Column(db.Boolean, default=False)
+    posted_at = db.Column(db.DateTime)
+    instagram_post_id = db.Column(db.String(100))
+    instagram_url = db.Column(db.String(500))
+    facebook_post_id = db.Column(db.String(100))
+    caption = db.Column(db.Text)
+    hashtags = db.Column(db.JSON)
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='image_references')
+
+class WebhookEvent(db.Model):
+    __tablename__ = 'webhook_events'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50))
+    payload = db.Column(db.JSON)
+    processed = db.Column(db.Boolean, default=False)
+    processed_at = db.Column(db.DateTime)
+    error_message = db.Column(db.Text)
+    retry_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
