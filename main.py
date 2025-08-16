@@ -463,54 +463,205 @@ class MediaUploadForm(FlaskForm):
         FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov'], 'Images and videos only!')
     ])
 
-@main_bp.route('/upload', methods=['GET', 'POST'])
+
+
+@main_bp.route('/media_library')
 @login_required
-def upload():
+def media_library():
+    """Display user's media library with pagination"""
     if not current_user.subscription_active:
         return redirect(url_for('auth.subscription'))
     
-    form = MediaUploadForm()
+    page = request.args.get('page', 1, type=int)
+    
+    # Get all posts for the user (these contain the media)
+    media = Post.query.filter_by(user_id=current_user.id)\
+        .order_by(Post.created_at.desc())\
+        .paginate(page=page, per_page=20, error_out=False)
+    
+    return render_template('media_library.html', media=media)
+
+@main_bp.route('/queue')
+@login_required
+def queue():
+    """Display processing queue and scheduled posts"""
+    if not current_user.subscription_active:
+        return redirect(url_for('auth.subscription'))
+    
+    # Get processing posts (pending AI generation)
+    processing_posts = Post.query.filter_by(
+        user_id=current_user.id,
+        status=PostStatus.PENDING
+    ).order_by(Post.created_at.desc()).all()
+    
+    # Get scheduled posts (approved and scheduled for publishing)
+    scheduled_posts = Post.query.filter_by(
+        user_id=current_user.id,
+        status=PostStatus.SCHEDULED
+    ).order_by(Post.scheduled_for.asc()).all()
+    
+    return render_template('queue.html', 
+                         processing_posts=processing_posts,
+                         scheduled_posts=scheduled_posts)
+
+@main_bp.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    """Handle media file uploads"""
+    if not current_user.subscription_active:
+        return redirect(url_for('auth.subscription'))
+    
+    from forms import FileUploadForm
+    from werkzeug.utils import secure_filename
+    import os
+    
+    form = FileUploadForm()
     
     if form.validate_on_submit():
+        files = request.files.getlist('files')
         uploaded_count = 0
         
-        for file in form.files.data:
+        for file in files:
             if file and allowed_file(file.filename):
-                # Read file data
-                file_data = file.read()
-                
-                # Determine media type
-                file_extension = file.filename.rsplit('.', 1)[1].lower()
-                media_type = 'image' if file_extension in ['jpg', 'jpeg', 'png', 'gif'] else 'video'
-                
-                # Upload to S3 using existing storage service
-                s3_url = storage_service.upload_user_media(
-                    file_data=file_data,
-                    filename=file.filename,
-                    user_id=current_user.id,
-                    media_type=media_type
-                )
-                
-                if s3_url:
-                    # Create Post record for the uploaded media
+                try:
+                    # Secure the filename
+                    filename = secure_filename(file.filename)
+                    
+                    # Determine media type
+                    file_ext = filename.rsplit('.', 1)[1].lower()
+                    is_video = file_ext in ['mp4', 'mov', 'avi']
+                    media_type = MediaType.VIDEO if is_video else MediaType.IMAGE
+                    
+                    # Create post record (for AI generation)
                     post = Post(
                         user_id=current_user.id,
-                        media_type=MediaType.IMAGE if media_type == 'image' else MediaType.VIDEO,
-                        media_url=s3_url,
+                        media_type=media_type,
                         status=PostStatus.PENDING,
+                        prompt_used="Generate engaging social media content",
                         generation_metadata={
-                            'source': 'user_upload',
-                            'original_filename': file.filename
+                            'original_filename': filename,
+                            'upload_method': 'manual'
                         }
                     )
                     db.session.add(post)
-                    uploaded_count += 1
+                    db.session.flush()  # Get post ID
+                    
+                    # Upload to S3
+                    from services.storage_service import storage_service
+                    media_url = storage_service.upload_generated_media(
+                        file,
+                        media_type.value,
+                        current_user.id,
+                        post.id
+                    )
+                    
+                    if media_url:
+                        post.media_url = media_url
+                        
+                        # Generate thumbnail for videos
+                        if media_type == MediaType.VIDEO:
+                            thumbnail_url = storage_service.generate_thumbnail(
+                                media_url, current_user.id, post.id
+                            )
+                            if thumbnail_url:
+                                post.thumbnail_url = thumbnail_url
+                        
+                        uploaded_count += 1
+                        
+                        # Queue AI caption generation
+                        from tasks.generation import generate_single_post
+                        
+                        # Find or create a default campaign
+                        campaign = Campaign.query.filter_by(
+                            user_id=current_user.id,
+                            is_active=True
+                        ).first()
+                        
+                        if not campaign:
+                            campaign = Campaign(
+                                user_id=current_user.id,
+                                name="Manual Uploads",
+                                description="Posts from manually uploaded media",
+                                prompt_template="Create engaging social media content for this image/video",
+                                posts_per_week=7
+                            )
+                            db.session.add(campaign)
+                            db.session.flush()
+                        
+                        # Trigger AI generation for caption
+                        generate_single_post.delay(
+                            current_user.id,
+                            campaign.id,
+                            0  # No weekly generation ID for manual uploads
+                        )
+                        
+                except Exception as e:
+                    current_app.logger.error(f'Error uploading file {filename}: {str(e)}')
+                    flash(f'Error uploading {filename}', 'error')
+        
+        db.session.commit()
         
         if uploaded_count > 0:
-            db.session.commit()
-            flash(f'Successfully uploaded {uploaded_count} file(s)', 'success')
-            return redirect(url_for('main.media_library'))
+            flash(f'Successfully uploaded {uploaded_count} file(s). AI is generating captions...', 'success')
+            return redirect(url_for('main.queue'))
         else:
-            flash('No files were uploaded', 'warning')
+            flash('No valid files were uploaded', 'warning')
     
     return render_template('upload.html', form=form)
+
+# Add helper function if not already present
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi'}
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Add campaign toggle API endpoint
+@main_bp.route('/api/campaigns/<int:campaign_id>/toggle', methods=['POST'])
+@login_required
+def toggle_campaign(campaign_id):
+    """Toggle campaign active status"""
+    campaign = Campaign.query.filter_by(
+        id=campaign_id, 
+        user_id=current_user.id
+    ).first()
+    
+    if not campaign:
+        return jsonify({'error': 'Campaign not found'}), 404
+    
+    campaign.is_active = not campaign.is_active
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'is_active': campaign.is_active,
+        'message': f'Campaign {"activated" if campaign.is_active else "deactivated"}'
+    })
+
+# Add campaign edit route
+@main_bp.route('/campaigns/<int:campaign_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_campaign(campaign_id):
+    """Edit existing campaign"""
+    if not current_user.subscription_active:
+        return redirect(url_for('auth.subscription'))
+    
+    campaign = Campaign.query.filter_by(
+        id=campaign_id,
+        user_id=current_user.id
+    ).first_or_404()
+    
+    form = CampaignForm(obj=campaign)
+    
+    if form.validate_on_submit():
+        campaign.name = form.name.data
+        campaign.description = form.description.data
+        campaign.prompt_template = form.prompt_template.data
+        campaign.posts_per_week = form.posts_per_week.data
+        campaign.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        flash('Campaign updated successfully!', 'success')
+        return redirect(url_for('main.campaigns'))
+    
+    return render_template('new_campaign.html', form=form, editing=True)
