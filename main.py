@@ -38,12 +38,18 @@ def dashboard():
     total_reach = db.session.query(db.func.sum(Post.reach))\
         .filter_by(user_id=current_user.id).scalar() or 0
     
+    # Fixed stats dictionary with all required keys
     stats = {
         'total_posts': total_posts,
         'total_reach': total_reach,
         'scheduled': scheduled_posts,
         'total_generated': total_generated,
-        'pending': pending_posts
+        'pending': pending_posts,
+        'total_media': Post.query.filter_by(user_id=current_user.id).count(),  # Total media files
+        'processing': Post.query.filter_by(
+            user_id=current_user.id, 
+            status=PostStatus.PENDING
+        ).count()  # Posts currently processing
     }
     
     return render_template('dashboard.html', stats=stats, recent_posts=recent_posts)
