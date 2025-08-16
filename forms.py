@@ -60,3 +60,11 @@ class BrandAssetForm(FlaskForm):
     description = TextAreaField('Description', validators=[Optional()],
                                render_kw={"rows": 3, "placeholder": "How should this asset be used?"})
     submit = SubmitField('Upload Asset')
+
+class FileUploadForm(FlaskForm):
+    """Form for uploading media files"""
+    files = FileField('Upload Files', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'], 
+                   'Only images (JPG, PNG, GIF) and videos (MP4, MOV, AVI) are allowed!')
+    ])
+    submit = SubmitField('Upload Files')
