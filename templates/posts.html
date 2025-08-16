@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block page_title %}Review Posts{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="section-header">
+        <h3 class="section-title">Review Generated Posts</h3>
+        <div style="display: flex; gap: 10px;">
+            <select id="statusFilter" class="btn btn-secondary" onchange="filterPosts(this.value)">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Posts</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Review</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                <option value="posted" {% if status_filter == 'posted' %}selected{% endif %}>Posted</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+    </div>
+
+    {% if posts.items %}
+        <div class="media-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+            {% for post in posts.items %}
+            <div class="post-card" data-post-id="{{ post.id }}" style="background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);">
+                <!-- Media Preview -->
+                <div style="position: relative; aspect-ratio: 1; background: var(--light-gray);">
+                    {% if post.media_url %}
+                        {% if post.media_type.value == 'image' %}
+                            <img src="{{ post.media_url }}" alt="Post media" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <video src="{{ post.media_url }}" style="width: 100%; height: 100%; object-fit: cover;" controls></video>
+                        {% endif %}
+                    {% else %}
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gray); font-size: 48px;">
+                            {% if post.media_type.value == 'image' %}📷{% else %}📹{% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    <div style="position: absolute; top: 10px; right: 10px;">
+                        <div class="media-status {{ post.status.value }}">
+                            {{ post.status.value.title() }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Details -->
+                <div style="padding: 20px;">
+                    <!-- Caption -->
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--dark); line-height: 1.5; margin: 0;">
+                            {{ post.caption[:150] }}{% if post.caption|length > 150 %}...{% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Hashtags -->
+                    {% if post.hashtags %}
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                            {% for hashtag in post.hashtags[:5] %}
+                                <span style="background: var(--light-gray); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                    {{ hashtag }}
+                                </span>
+                            {% endfor %}
+                            {% if post.hashtags|length > 5 %}
+                                <span style="color: var(--gray); font-size: 12px; padding: 4px;">
+                                    +{{ post.hashtags|length - 5 }} more
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Metadata -->
+                    <div style="font-size: 12px; color: var(--gray); margin-bottom: 15px;">
+                        <div>Campaign: {{ post.campaign.name if post.campaign else 'N/A' }}</div>
+                        <div>Created: {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                        {% if post.scheduled_for %}
+                            <div>Scheduled: {{ post.scheduled_for.strftime('%B %d at %I:%M %p') }}</div>
+                        {% endif %}
+                        {% if post.posted_at %}
+                            <div>Posted: {{ post.posted_at.strftime('%B %d at %I:%M %p') }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if post.status.value == 'pending' %}
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" style="flex: 1;" onclick="approvePost({{ post.id }})">
+                            ✅ Approve
+                        </button>
+                        <button class="btn btn-secondary" style="flex: 1;" onclick="showRejectDialog({{ post.id }})">
+                            ❌ Reject
+                        </button>
+                    </div>
+                    {% elif post.status.value == 'rejected' %}
+                    <div style="background: var(--light-gray); padding: 10px; border-radius: 6px; border-left: 3px solid var(--danger);">
+                        <div style="font-size: 12px; color: var(--danger); font-weight: 500; margin-bottom: 4px;">Rejection Note:</div>
+                        <div style="font-size: 13px; color: var(--dark);">{{ post.rejection_note }}</div>
+                    </div>
+                    {% elif post.status.value == 'posted' and post.engagement_rate %}
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--primary);">{{ post.likes or 0 }}</div>
+                            <div style="font-size: 11px; color: var(--gray);">Likes</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--primary);">{{ post.comments or 0 }}</div>
+                            <div style="font-size: 11px; color: var(--gray);">Comments</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 600; color: var(--primary);">{{ "%.1f"|format(post.engagement_rate) }}%</div>
+                            <div style="font-size: 11px; color: var(--gray);">Engagement</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if posts.pages > 1 %}
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px;">
+            {% if posts.has_prev %}
+                <a href="{{ url_for('main.posts', page=posts.prev_num, status=status_filter) }}" class="btn btn-secondary">Previous</a>
+            {% endif %}
+            
+            <span style="color: var(--gray);">Page {{ posts.page }} of {{ posts.pages }}</span>
+            
+            {% if posts.has_next %}
+                <a href="{{ url_for('main.posts', page=posts.next_num, status=status_filter) }}" class="btn btn-secondary">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 0; color: var(--gray);">
+            <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
+            <h3 style="margin-bottom: 10px;">No posts to review</h3>
+            <p>Your AI-generated posts will appear here for review and approval.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Reject Dialog Modal -->
+<div id="rejectDialog" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; margin: 20px;">
+        <h3 style="margin-bottom: 20px;">Reject Post</h3>
+        <p style="color: var(--gray); margin-bottom: 20px;">Please provide feedback to help AI generate better content:</p>
+        <textarea id="rejectionNote" placeholder="What would you like to change about this post?" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-height: 100px; resize: vertical; margin-bottom: 20px;"></textarea>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="submitRejection()" style="flex: 1;">Submit Feedback</button>
+            <button class="btn btn-secondary" onclick="closeRejectDialog()" style="flex: 1;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRejectPostId = null;
+
+function filterPosts(status) {
+    window.location.href = `{{ url_for('main.posts') }}?status=${status}`;
+}
+
+function approvePost(postId) {
+    fetch(`/api/posts/${postId}/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Post approved successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage(data.error || 'Failed to approve post', 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Network error occurred', 'error');
+        console.error('Error:', error);
+    });
+}
+
+function showRejectDialog(postId) {
+    currentRejectPostId = postId;
+    document.getElementById('rejectDialog').style.display = 'flex';
+    document.getElementById('rejectionNote').value = '';
+    document.getElementById('rejectionNote').focus();
+}
+
+function closeRejectDialog() {
+    currentRejectPostId = null;
+    document.getElementById('rejectDialog').style.display = 'none';
+}
+
+function submitRejection() {
+    const note = document.getElementById('rejectionNote').value.trim();
+    
+    if (!note) {
+        showMessage('Please provide feedback for the rejection', 'warning');
+        return;
+    }
+    
+    if (!currentRejectPostId) return;
+    
+    fetch(`/api/posts/${currentRejectPostId}/reject`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ note: note })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Post rejected and queued for regeneration', 'success');
+            closeRejectDialog();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage(data.error || 'Failed to reject post', 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Network error occurred', 'error');
+        console.error('Error:', error);
+    });
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('rejectDialog').style.display === 'flex') {
+        closeRejectDialog();
+    }
+});
+
+// Close modal on background click
+document.getElementById('rejectDialog').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('rejectDialog')) {
+        closeRejectDialog();
+    }
+});
+</script>
+{% endblock %}
